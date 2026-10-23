@@ -6,7 +6,6 @@ Front-End em **Angular 21** (versão LTS mais recente) que consome a API do `exe
 - Busca de produto por código (usa `findByCodigo` da API)
 - Busca por categoria e faixa de preço (usa a `@Query` nativa da API)
 - Componentes separados em `.ts`, `.html` e `.scss`
-- NgRx (Store + Effects) para as categorias
 
 ## Antes de começar
 
@@ -62,6 +61,358 @@ O navegador chama `/api/...` no próprio servidor do Angular (`localhost:4200`).
 Navegador → localhost:4200/api/produtos → (proxy) → localhost:8080/produtos
 ```
 
+## Mini aula de Angular
+
+Os exemplos abaixo são trechos reais deste projeto. Abra os arquivos citados ao lado para ver o código completo.
+
+### 1. Componentes
+
+Um **componente** é um pedaço da tela com sua própria lógica, aparência e estilo. A tela inteira é uma árvore de componentes: o `app-root` contém a barra de navegação (`app-navbar`), o aviso (`app-toast`) e, no meio, a página da rota atual. Uma página, por sua vez, contém componentes menores, como a tabela e o formulário.
+
+Cada componente é uma pasta com três arquivos:
+
+```
+produto-tabela/
+├── produto-tabela.ts     lógica: a classe TypeScript
+├── produto-tabela.html   o que aparece na tela (template)
+└── produto-tabela.scss   estilo, vale só para este componente
+```
+
+O `.ts` liga os três e define o nome da tag que o componente usa no HTML:
+
+```ts
+@Component({
+  selector: 'app-produto-tabela',
+  imports: [CurrencyPipe],
+  templateUrl: './produto-tabela.html',
+  styleUrl: './produto-tabela.scss',
+})
+export class ProdutoTabela { }
+```
+
+Para usar um componente dentro de outro, escreva a tag no HTML do pai e coloque a classe no `imports` do pai:
+
+```html
+<app-produto-tabela />
+```
+
+**Por que separar em componentes?** Cada peça faz uma coisa só e pode ser reaproveitada. A `ProdutoForm` serve tanto para criar quanto para editar produto, sem copiar código.
+
+Neste projeto há dois tipos:
+
+- **Páginas** (`pages/`): ligadas a uma rota. Buscam dados na API e decidem o que fazer.
+- **Componentes** (`components/`): só recebem dados e avisam quando algo acontece. Não conhecem a API nem as rotas.
+
+### 2. Template: `{{ }}`, `[ ]` e `( )`
+
+O HTML do Angular tem três símbolos para ligar o template à classe:
+
+| Símbolo | Nome | Direção | Exemplo |
+| --- | --- | --- | --- |
+| `{{ }}` | interpolação | classe vira texto na tela | `{{ produto.nome }}` |
+| `[ ]` | property binding | classe vira valor de uma propriedade | `[produtos]="lista"` |
+| `( )` | event binding | evento da tela chama método da classe | `(click)="remover(produto)"` |
+
+Regra para lembrar: **colchetes mandam dado para dentro, parênteses recebem evento de fora**.
+
+Exemplo de `( )` com função de clique, em `produto-tabela.html`:
+
+```html
+<button type="button" (click)="editar.emit(produto.id)">Editar</button>
+```
+
+Ao clicar, o Angular executa a expressão entre aspas. Outros eventos funcionam do mesmo jeito:
+
+```html
+<input (input)="filtrar($event)" />
+<input #campoCodigo (keyup.enter)="buscarPorCodigo(campoCodigo.value)" />
+```
+
+- `(input)` dispara a cada letra digitada. `$event` é o evento do navegador, e dele se tira o texto digitado.
+- `(keyup.enter)` dispara só quando a tecla Enter é solta.
+- `#campoCodigo` cria uma variável de template: uma referência ao próprio `<input>`, usada no mesmo HTML como `campoCodigo.value`.
+
+Exemplo de `[ ]` mudando a aparência conforme a classe, em `produto-form.html`:
+
+```html
+<input formControlName="codigo" [class.invalido]="invalido('codigo')" />
+```
+
+A classe CSS `invalido` só é aplicada quando `invalido('codigo')` devolve `true`.
+
+Duas construções do template também aparecem o tempo todo:
+
+```html
+@if (produtos().length === 0) {
+  <p>Nenhum produto encontrado.</p>
+} @else {
+  @for (produto of produtos(); track produto.id) {
+    <tr><td>{{ produto.nome }}</td></tr>
+  }
+}
+```
+
+`@if` mostra ou esconde um trecho. `@for` repete um trecho para cada item da lista. O `track` diz qual campo identifica cada item (aqui, o `id`).
+
+### 3. Comunicação entre componentes: `input` e `output`
+
+Um componente filho não busca dados sozinho. Ele **recebe** dados do pai e **avisa** o pai quando algo acontece.
+
+```
+        PAI (página)
+         │      ▲
+ [dados] │      │ (evento)
+  input  ▼      │  output
+        FILHO (componente)
+```
+
+**`input()`: o pai manda um dado para o filho.** No `.ts` do filho:
+
+```ts
+export class ProdutoTabela {
+  readonly produtos = input.required<ProdutoBusca[]>();
+  readonly mostrarAcoes = input(true);
+}
+```
+
+- `input.required<...>()`: o pai é obrigado a informar.
+- `input(true)`: opcional, com valor padrão `true`.
+- No HTML do filho, o valor é lido chamando como função: `produtos()`.
+
+No HTML do pai, os dados vão pelos **colchetes**:
+
+```html
+<app-produto-tabela [produtos]="produtosFiltrados()" [mostrarAcoes]="false" />
+```
+
+**`output()`: o filho avisa o pai.** No `.ts` do filho:
+
+```ts
+export class ProdutoTabela {
+  readonly editar = output<number>();
+  readonly remover = output<ProdutoBusca>();
+}
+```
+
+O `<number>` é o tipo do dado enviado junto com o aviso. No HTML do filho, o aviso sai com `.emit(...)`:
+
+```html
+<button (click)="editar.emit(produto.id)">Editar</button>
+```
+
+No HTML do pai, o aviso é ouvido pelos **parênteses**, e `$event` é o dado enviado:
+
+```html
+<app-produto-tabela
+  [produtos]="produtosFiltrados()"
+  (editar)="editar($event)"
+  (remover)="remover($event)"
+/>
+```
+
+Quando o usuário clica em Editar, o fluxo é:
+
+1. O botão do filho chama `editar.emit(produto.id)`.
+2. O pai estava ouvindo `(editar)`, então chama o próprio método `editar($event)`, com o id.
+3. O método do pai navega para `/editar/produto/<id>`.
+
+O filho **não sabe** o que o pai faz com o aviso. Isso permite usar a mesma tabela em telas diferentes: na lista os botões aparecem (`[mostrarAcoes]="true"`) e na busca por categoria não.
+
+O mesmo vale para o formulário:
+
+```html
+<app-produto-form
+  [categorias]="categorias()"
+  textoBotao="Criar"
+  (salvar)="salvar($event)"
+  (cancelar)="cancelar()"
+/>
+```
+
+Dados entram por `[ ]` (`categorias`, `textoBotao`) e eventos saem por `( )` (`salvar`, `cancelar`).
+
+### 4. Formulários
+
+Este projeto usa **formulários reativos**: o formulário é descrito na classe TypeScript, e o HTML só se liga a ele. Em `produto-form.ts`:
+
+```ts
+protected readonly form = this.fb.nonNullable.group({
+  codigo: ['', [Validators.required, Validators.maxLength(30)]],
+  nome: ['', [Validators.required, Validators.maxLength(120)]],
+  preco: [0, [Validators.required, Validators.min(0.01)]],
+  categoriaId: [0, [Validators.required, Validators.min(1)]],
+});
+```
+
+Cada campo tem um valor inicial e uma lista de validações. Elas espelham as anotações do Back-End (`@NotBlank`, `@Size`, `@DecimalMin`).
+
+No HTML, três ligações:
+
+```html
+<form [formGroup]="form" (ngSubmit)="enviar()">
+  <input formControlName="codigo" />
+  <button type="submit">Salvar</button>
+</form>
+```
+
+- `[formGroup]="form"`: liga o `<form>` ao grupo da classe.
+- `formControlName="codigo"`: liga o `<input>` ao campo `codigo` do grupo.
+- `(ngSubmit)="enviar()"`: ao enviar o formulário (botão ou Enter), chama o método.
+
+O método que trata o envio:
+
+```ts
+protected enviar(): void {
+  if (this.form.invalid) {
+    this.form.markAllAsTouched();
+    return;
+  }
+  this.salvar.emit(this.form.getRawValue());
+}
+```
+
+Se houver erro de validação, `markAllAsTouched()` marca todos os campos como "tocados", e as mensagens de erro aparecem. Se estiver tudo certo, o formulário **não chama a API**: ele emite o valor pelo `output` `salvar`, e a página decide o que fazer com ele. Veja como o formulário se comunica com o pai pelo mesmo mecanismo da seção anterior.
+
+### 5. Service
+
+**Service** é uma classe que concentra uma tarefa e pode ser usada por vários componentes. Aqui, cada service conversa com um recurso da API. Em `produto.service.ts`:
+
+```ts
+@Injectable({ providedIn: 'root' })
+export class ProdutoService {
+  private readonly http = inject(HttpClient);
+  private readonly url = '/api/produtos';
+
+  listar(): Observable<Produto[]> {
+    return this.http.get<Produto[]>(this.url);
+  }
+
+  criar(request: ProdutoRequest): Observable<Produto> {
+    return this.http.post<Produto>(this.url, request);
+  }
+}
+```
+
+- `@Injectable({ providedIn: 'root' })`: o Angular cria uma única instância e a entrega a quem pedir.
+- `inject(HttpClient)`: pede ao Angular a ferramenta para fazer chamadas HTTP.
+- Os métodos espelham os endpoints do Back-End (`GET /produtos`, `POST /produtos`).
+
+Para usar o service numa página, peça com `inject` e chame o método:
+
+```ts
+export class ProdutosLista implements OnInit {
+  private readonly produtoService = inject(ProdutoService);
+  protected readonly produtos = signal<Produto[]>([]);
+
+  ngOnInit(): void {
+    this.produtoService.listar().subscribe({
+      next: (lista) => this.produtos.set(lista),
+      error: () => this.produtos.set([]),
+    });
+  }
+}
+```
+
+- `ngOnInit` roda uma vez, quando a página aparece. É onde se buscam os dados iniciais.
+- A chamada HTTP só acontece quando alguém faz `subscribe`. Sem o `subscribe`, nada é enviado.
+- `next` recebe a resposta; `error` recebe a falha.
+- `signal` guarda o valor que a tela mostra. Quando o `set` é chamado, o Angular atualiza a tela sozinho. No HTML, o valor é lido como função: `produtos()`.
+
+A divisão de responsabilidades fica assim:
+
+| Quem | Faz o quê |
+| --- | --- |
+| Service | fala com a API |
+| Página | chama o service, guarda o resultado e decide para onde ir depois |
+| Componente | mostra dados e avisa eventos |
+
+Fluxo da tela até o banco, em um clique de "Criar":
+
+```
+ProdutoForm → (salvar) → ProdutoNovo → ProdutoService → HTTP → Controller → Service → Repository → banco
+```
+
+### 6. Rotas (Router)
+
+A **rota** liga uma URL a um componente. Em um site Angular existe uma única página HTML, e o Router troca o componente exibido conforme o endereço, sem recarregar a página. As rotas ficam em `app.routes.ts`:
+
+```ts
+export const routes: Routes = [
+  { path: '', pathMatch: 'full', redirectTo: 'produtos' },
+  { path: 'produtos', loadComponent: () => import('./pages/produtos-lista/produtos-lista').then((m) => m.ProdutosLista) },
+  { path: 'novo/produto', loadComponent: () => import('./pages/produto-novo/produto-novo').then((m) => m.ProdutoNovo) },
+  { path: 'editar/produto/:id', loadComponent: () => import('./pages/produto-editar/produto-editar').then((m) => m.ProdutoEditar) },
+  { path: '**', loadComponent: () => import('./pages/nao-encontrada/nao-encontrada').then((m) => m.NaoEncontrada) },
+];
+```
+
+Peça por peça:
+
+- `path`: o trecho da URL, depois de `localhost:4200/`.
+- `redirectTo`: quem abre `/` é levado a `/produtos`.
+- `loadComponent`: qual componente mostrar. O formato com `import(...)` é o *lazy loading*: o código da página só é baixado quando alguém entra nela.
+- `:id`: um **parâmetro**. A URL `/editar/produto/1` tem `id = 1`.
+- `**`: qualquer URL que não casou com as anteriores. Serve de página 404. Precisa ser a **última**, porque o Router usa a primeira rota que casa.
+
+**Onde a página aparece:** no `app.html`, a tag `<router-outlet />` marca o lugar. O componente da rota atual é desenhado ali, enquanto a barra de navegação fica sempre visível.
+
+```html
+<app-navbar />
+<main>
+  <router-outlet />
+</main>
+```
+
+**Navegar com link:** use `routerLink` no lugar de `href`. Com `href` a página inteira recarregaria.
+
+```html
+<a routerLink="/produtos" routerLinkActive="ativo">Produtos</a>
+```
+
+O `routerLinkActive` adiciona a classe `ativo` ao link da rota atual, e é isso que destaca a aba selecionada.
+
+**Navegar pelo código:** injete o `Router` e chame `navigate`, por exemplo depois de salvar:
+
+```ts
+private readonly router = inject(Router);
+
+this.router.navigate(['/produtos']);
+this.router.navigate(['/editar/produto', id]);
+```
+
+**Ler o parâmetro da URL:** em `/editar/produto/:id`, a página recebe o `id` como `input`, o mesmo mecanismo da seção 3:
+
+```ts
+export class ProdutoEditar {
+  readonly id = input.required<string>();
+}
+```
+
+Isso funciona porque, em `app.config.ts`, o router foi configurado com `withComponentInputBinding()`. O parâmetro chega como texto, por isso o código usa `Number(this.id())` antes de chamar a API.
+
+**Resumo das rotas deste projeto:**
+
+| URL | Componente | Observação |
+| --- | --- | --- |
+| `/` | redireciona | vai para `/produtos` |
+| `/produtos` | `ProdutosLista` | tela inicial |
+| `/novo/produto` | `ProdutoNovo` | formulário vazio |
+| `/editar/produto/1` | `ProdutoEditar` | o `1` é o `:id` |
+| `/qualquer-coisa` | `NaoEncontrada` | rota `**` |
+
+### Juntando tudo: editar um produto
+
+1. Na lista (`ProdutosLista`), a tabela (`ProdutoTabela`) mostra os produtos recebidos por `[produtos]`.
+2. O clique no botão **Editar** faz `editar.emit(produto.id)`.
+3. A página ouve `(editar)` e chama `router.navigate(['/editar/produto', id])`.
+4. A URL vira `/editar/produto/1`, e o Router mostra `ProdutoEditar`, que recebe `id` como `input`.
+5. `ProdutoEditar` chama `ProdutoService.buscarPorId` e guarda o resultado em um `signal`.
+6. O `ProdutoForm` recebe o produto por `[produto]` e preenche os campos.
+7. Ao salvar, o formulário valida e emite `(salvar)`.
+8. A página chama `ProdutoService.atualizar`, e depois `router.navigate(['/produtos'])` volta para a lista.
+
+Tente seguir esse caminho com o código aberto e o F12 na aba Network.
+
 ## Telas e rotas
 
 | Rota | Tela | O que faz |
@@ -71,7 +422,7 @@ Navegador → localhost:4200/api/produtos → (proxy) → localhost:8080/produto
 | `/buscar` | `ProdutosBusca` | busca por categoria e faixa de preço (query nativa) |
 | `/novo/produto` | `ProdutoNovo` | formulário de novo produto |
 | `/editar/produto/1` | `ProdutoEditar` | edita o produto de id 1 (o número da URL é o id) |
-| `/categorias` | `Categorias` | CRUD de categorias, com NgRx |
+| `/categorias` | `Categorias` | CRUD de categorias |
 | qualquer outra | `NaoEncontrada` | página 404 |
 
 ## Onde está cada coisa
@@ -82,10 +433,9 @@ src/app
 ├── components/    peças reutilizáveis, sem conhecer rota nem API ("componentes burros")
 ├── services/      chamadas HTTP (HttpClient), uma classe por recurso
 ├── models/        interfaces TypeScript, espelham os DTOs Request e Response da API
-├── store/         NgRx: actions, reducer e effects das categorias
 ├── core/          interceptor de erros e serviço de notificação (toast)
 ├── app.routes.ts  rotas, carregadas sob demanda
-└── app.config.ts  providers globais (router, HttpClient, interceptor, NgRx)
+└── app.config.ts  providers globais (router, HttpClient, interceptor)
 ```
 
 Cada componente é uma pasta com **três arquivos**:
@@ -115,37 +465,6 @@ produto-form/
 | Rotas com lazy loading (`loadComponent`) e página 404 | `app.routes.ts` |
 | Serviço injetado com `inject()` | `services/` |
 | Interceptor HTTP (trata erro em um lugar só) | `core/erro.interceptor.ts` |
-| NgRx | `store/categorias/` (veja abaixo) |
-
-### NgRx: como o fluxo funciona
-
-O NgRx guarda o estado da aplicação em um lugar central (o *Store*) e só o altera por um caminho fixo. Aqui ele cuida das categorias, usadas em três telas (lista de categorias, novo produto e busca).
-
-```
-Tela --dispatch--> Action --> Reducer --> Store (novo estado) --> Tela lê com selectSignal
-                      \
-                       --> Effect (chama a API e dispara outra Action com o resultado)
-```
-
-- `categorias.actions.ts`: os eventos possíveis (`carregar`, `criar`, `criarSucesso`...).
-- `categorias.reducer.ts`: função pura que, dado o estado e uma action, devolve o novo estado. O estado é `{ itens, carregando, carregado }`.
-- `categorias.effects.ts`: efeitos colaterais, como chamar a API e mostrar o aviso de sucesso.
-- Nas telas: `store.dispatch(...)` para pedir algo e `store.selectSignal(...)` para ler.
-
-**Cache:** toda tela que precisa de categorias faz `dispatch(carregar)` ao abrir, mas o effect só chama a API se `carregado` ainda for `false`. Depois do primeiro carregamento, as outras telas reaproveitam o que já está no Store. Criar, editar e remover também atualizam o Store direto (`criarSucesso`, `atualizarSucesso`, `removerSucesso`), então não é preciso buscar a lista de novo. Para conferir: abra a aba Network (F12), passe por Categorias, Novo produto e Buscar por categoria, e veja que só existe uma chamada `GET /api/categorias`. Se o carregamento falhar, `carregado` continua `false` e a próxima tela tenta de novo.
-
-### Quando o NgRx compensa (e quando não)
-
-| Compensa | Não compensa |
-| --- | --- |
-| Vários componentes e telas leem e alteram o mesmo estado | O estado é usado em uma tela só |
-| Fluxos com muitas etapas e efeitos encadeados (chamar API, depois outra ação) | CRUD simples, como os produtos deste projeto |
-| Precisa depurar com o Redux DevTools e ver cada ação | A equipe é pequena e o projeto é curto |
-| Equipe grande que precisa de um padrão único e previsível | Um service com `signal()` resolve com bem menos arquivos |
-
-Este projeto usa NgRx nas categorias para ela ver o padrão. Os produtos usam service com signals, e dá para comparar a quantidade de código das duas formas. Para um projeto deste tamanho, o service com signals bastaria.
-
-Os produtos usam apenas o `ProdutoService` com signals de propósito: dá para comparar as duas formas e ver quando o NgRx compensa.
 
 ## Paralelo com o Back-End
 
@@ -178,7 +497,6 @@ Os produtos usam apenas o `ProdutoService` com signals de propósito: dá para c
 ## Exercícios sugeridos
 
 1. Crie a rota `/editar/categoria/:id`, no mesmo molde da edição de produto.
-2. Transforme os produtos em NgRx também (`store/produtos/`), seguindo o molde das categorias.
-3. Crie um pipe `preco` que formata em reais e use no lugar de `currency`.
-4. Adicione um guard (`canDeactivate`) que pergunta antes de sair de um formulário preenchido.
-5. Escreva um teste para o `produto-tabela` verificando que o botão Editar emite o id.
+2. Crie um pipe `preco` que formata em reais e use no lugar de `currency`.
+3. Adicione um guard (`canDeactivate`) que pergunta antes de sair de um formulário preenchido.
+4. Escreva um teste para o `produto-tabela` verificando que o botão Editar emite o id.
