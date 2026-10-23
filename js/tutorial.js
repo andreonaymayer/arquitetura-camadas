@@ -10,6 +10,10 @@
     return { left, top, width: right - left, height: bottom - top, right, bottom };
   };
 
+  const REPO_URL = 'https://github.com/andreonaymayer/arquitetura-camadas';
+  const REPO_LABEL = 'Acessar exemplos de código Java';
+  const repoLink = `<a class="btn success" href="${REPO_URL}" target="_blank" rel="noopener noreferrer">${REPO_LABEL}</a>`;
+
   const HEART = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 2.7 5 6 5c1.9 0 3.4 1 4.2 2.4h3.6C14.6 6 16.1 5 18 5c3.3 0 5.1 3.4 3.6 6.8C19.5 16.4 12 21 12 21z"/></svg>';
 
   const laneFull = index => () => {
@@ -135,7 +139,7 @@
     {
       title: 'Pronto!',
       heart: true,
-      text: '<p>Agora, quando tu aprender essa porra, tu deve 1000 beijos ao Andreo por ele ser o melhor namorado do mundo e fazer esse negócio pra ti. Vai estudar, muié!</p><p>Comece escolhendo <b>POST — Cadastrar Pet</b>, preencha o formulário e vá avançando os passos.</p><p>Para rever este tutorial, use o botão <b>Tutorial</b> no topo.</p>',
+      text: '<p>Agora, quando tu aprender essa porra, tu deve 1000 beijos ao Andreo por ele ser o melhor namorado do mundo e fazer esse negócio pra ti. Vai estudar, muié!</p><p>Comece escolhendo <b>POST — Cadastrar Pet</b>, preencha o formulário e vá avançando os passos.</p><p>Para rever este tutorial, use o botão <b>Tutorial</b> no topo e escolha <b>Rever tutorial</b>.</p><p class="tour-link">' + repoLink + '</p>',
       last: true
     }
   ];
@@ -180,6 +184,22 @@
       <p class="love-text">Te amo, e tô contigo no bom e no mau tempo.<br>Tu é esperta, e vai conseguir. <span class="tour-heart">${HEART}</span></p>
     </section>`;
   document.body.appendChild(love);
+
+  const menu = document.createElement('div');
+  menu.className = 'menu';
+  menu.hidden = true;
+  menu.innerHTML = `
+    <section class="menu-card" role="dialog" aria-label="Tutorial">
+      <header class="menu-head">
+        <h3>Tutorial</h3>
+        <button type="button" class="menu-close" aria-label="Fechar" title="Fechar">✕</button>
+      </header>
+      <div class="menu-actions">
+        ${repoLink}
+        <button type="button" class="btn primary" id="menu-review">Rever tutorial</button>
+      </div>
+    </section>`;
+  document.body.appendChild(menu);
 
 
   const spot = layer.querySelector('.tour-spot');
@@ -384,20 +404,42 @@
     if (isOpen) place();
   });
 
+  const showMenu = () => {
+    menu.hidden = false;
+    document.body.classList.add('modal-open');
+  };
+
+  const hideMenu = () => {
+    menu.hidden = true;
+    document.body.classList.remove('modal-open');
+  };
+
+  const review = () => {
+    if (!window.Lab.hasProgress()) return open(0);
+    window.Lab.board.confirmNotice(
+      '<p><b>Abrir o tutorial vai resetar o banco.</b></p><p>Os pets e os agendamentos que você criou, e o fluxo que está em andamento, serão apagados.</p><p>Quer continuar?</p>',
+      'Resetar e abrir tutorial',
+      () => {
+        byId('btn-reset-db').click();
+        open(0);
+      }
+    );
+  };
+
+  menu.querySelector('.menu-close').addEventListener('click', hideMenu);
+  menu.querySelector('#menu-review').addEventListener('click', () => {
+    hideMenu();
+    review();
+  });
+  menu.addEventListener('click', event => {
+    if (event.target === menu) hideMenu();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !menu.hidden) hideMenu();
+  });
+
   const button = byId('btn-tutorial');
-  if (button) {
-    button.addEventListener('click', () => {
-      if (!window.Lab.hasProgress()) return open(0);
-      window.Lab.board.confirmNotice(
-        '<p><b>Abrir o tutorial vai resetar o banco.</b></p><p>Os pets e os agendamentos que você criou, e o fluxo que está em andamento, serão apagados.</p><p>Quer continuar?</p>',
-        'Resetar e abrir tutorial',
-        () => {
-          byId('btn-reset-db').click();
-          open(0);
-        }
-      );
-    });
-  }
+  if (button) button.addEventListener('click', showMenu);
 
   window.Lab.tutorial = { open, close };
 

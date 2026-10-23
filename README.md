@@ -2,7 +2,9 @@
 
 Painel interativo para aprender o fluxo de dados em um Back-End em camadas: Front-End, Controller, Service, Repository e Banco de Dados.
 
-Abra `index.html` (ou a página publicada no GitHub Pages) e siga o tutorial.
+**Acesse a página:** https://andreonaymayer.github.io/arquitetura-camadas/
+
+Também dá para abrir o `index.html` direto no navegador. Siga o tutorial que abre ao entrar.
 
 ## Exemplos em código
 
