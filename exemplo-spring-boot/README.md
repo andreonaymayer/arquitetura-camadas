@@ -29,11 +29,10 @@ Fluxo de um `POST /produtos`:
 | O que | Onde |
 | --- | --- |
 | Consulta derivada do nome do método, sem `@Query` (`findByCodigo`) | `ProdutoRepository` |
-| Consulta SQL própria com `@Query(nativeQuery = true)` e JOIN | `ProdutoRepository.buscarPorCategoriaEFaixaDePreco` |
-| Projeção por interface (retorno da query nativa) | `ProdutoPorCategoriaResponse` |
+| Consulta SQL própria com `@Query(nativeQuery = true)` e JOIN, devolvendo `Produto` | `ProdutoRepository.buscarPorCategoriaEFaixaDePreco` |
 | Relacionamento `@ManyToOne` com FK | `Produto.categoria` |
 | Validação de entrada | `ProdutoRequest`, `CategoriaRequest` |
-| Entidade nunca sai da API, só DTO | `ProdutoResponse.de(...)` |
+| Entidade nunca sai da API: o método estático `de(...)` converte entidade em DTO | `ProdutoResponse.de(...)`, usado também na busca da query nativa |
 | Erros HTTP (404, 409, 400) com `ResponseStatusException` | `service/` |
 
 ## Pasta `sql/` (um "Flyway de mentira")

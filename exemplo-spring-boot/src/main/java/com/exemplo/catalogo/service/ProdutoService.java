@@ -1,6 +1,5 @@
 package com.exemplo.catalogo.service;
 
-import com.exemplo.catalogo.dto.ProdutoPorCategoriaResponse;
 import com.exemplo.catalogo.dto.ProdutoRequest;
 import com.exemplo.catalogo.dto.ProdutoResponse;
 import com.exemplo.catalogo.entity.Categoria;
@@ -8,6 +7,7 @@ import com.exemplo.catalogo.entity.Produto;
 import com.exemplo.catalogo.repository.CategoriaRepository;
 import com.exemplo.catalogo.repository.ProdutoRepository;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -27,9 +27,11 @@ public class ProdutoService {
 
     @Transactional(readOnly = true)
     public List<ProdutoResponse> listar() {
-        return produtoRepository.findAll().stream()
-                .map(ProdutoResponse::de)
-                .toList();
+        List<ProdutoResponse> respostas = new ArrayList<>();
+        for (Produto produto : produtoRepository.findAll()) {
+            respostas.add(ProdutoResponse.de(produto));
+        }
+        return respostas;
     }
 
     @Transactional(readOnly = true)
@@ -45,9 +47,14 @@ public class ProdutoService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProdutoPorCategoriaResponse> buscarPorCategoriaEFaixaDePreco(
+    public List<ProdutoResponse> buscarPorCategoriaEFaixaDePreco(
             String categoria, BigDecimal precoMin, BigDecimal precoMax) {
-        return produtoRepository.buscarPorCategoriaEFaixaDePreco(categoria, precoMin, precoMax);
+        List<Produto> produtos = produtoRepository.buscarPorCategoriaEFaixaDePreco(categoria, precoMin, precoMax);
+        List<ProdutoResponse> respostas = new ArrayList<>();
+        for (Produto produto : produtos) {
+            respostas.add(ProdutoResponse.de(produto));
+        }
+        return respostas;
     }
 
     @Transactional

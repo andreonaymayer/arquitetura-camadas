@@ -5,6 +5,7 @@ import com.exemplo.catalogo.dto.CategoriaResponse;
 import com.exemplo.catalogo.entity.Categoria;
 import com.exemplo.catalogo.repository.CategoriaRepository;
 import com.exemplo.catalogo.repository.ProdutoRepository;
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -24,9 +25,11 @@ public class CategoriaService {
 
     @Transactional(readOnly = true)
     public List<CategoriaResponse> listar() {
-        return categoriaRepository.findAll().stream()
-                .map(CategoriaResponse::de)
-                .toList();
+        List<CategoriaResponse> respostas = new ArrayList<>();
+        for (Categoria categoria : categoriaRepository.findAll()) {
+            respostas.add(CategoriaResponse.de(categoria));
+        }
+        return respostas;
     }
 
     @Transactional(readOnly = true)

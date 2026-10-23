@@ -1,6 +1,5 @@
 package com.exemplo.catalogo.controller;
 
-import com.exemplo.catalogo.dto.ProdutoPorCategoriaResponse;
 import com.exemplo.catalogo.dto.ProdutoRequest;
 import com.exemplo.catalogo.dto.ProdutoResponse;
 import com.exemplo.catalogo.service.ProdutoService;
@@ -45,7 +44,7 @@ public class ProdutoController {
     }
 
     @GetMapping("/busca")
-    public List<ProdutoPorCategoriaResponse> buscarPorCategoriaEFaixaDePreco(
+    public List<ProdutoResponse> buscarPorCategoriaEFaixaDePreco(
             @RequestParam String categoria,
             @RequestParam BigDecimal precoMin,
             @RequestParam BigDecimal precoMax) {

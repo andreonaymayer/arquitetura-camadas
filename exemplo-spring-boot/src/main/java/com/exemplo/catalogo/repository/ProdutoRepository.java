@@ -1,6 +1,5 @@
 package com.exemplo.catalogo.repository;
 
-import com.exemplo.catalogo.dto.ProdutoPorCategoriaResponse;
 import com.exemplo.catalogo.entity.Produto;
 import java.math.BigDecimal;
 import java.util.List;
@@ -18,18 +17,14 @@ public interface ProdutoRepository extends JpaRepository<Produto, Long> {
     boolean existsByCategoriaId(Long categoriaId);
 
     @Query(value = """
-            SELECT p.id AS id,
-                   p.codigo AS codigo,
-                   p.nome AS nome,
-                   p.preco AS preco,
-                   c.nome AS categoriaNome
+            SELECT p.*
               FROM produto p
               JOIN categoria c ON c.id = p.categoria_id
              WHERE c.nome ILIKE :categoria
                AND p.preco BETWEEN :precoMin AND :precoMax
              ORDER BY p.preco ASC
             """, nativeQuery = true)
-    List<ProdutoPorCategoriaResponse> buscarPorCategoriaEFaixaDePreco(
+    List<Produto> buscarPorCategoriaEFaixaDePreco(
             @Param("categoria") String categoria,
             @Param("precoMin") BigDecimal precoMin,
             @Param("precoMax") BigDecimal precoMax);
