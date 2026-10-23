@@ -1,0 +1,35 @@
+<div class="cabecalho-pagina">
+  <h2>Categorias</h2>
+</div>
+
+<section class="card">
+  <h2>{{ editando() ? 'Editando categoria #' + editando()!.id : 'Nova categoria' }}</h2>
+  <app-categoria-form [categoria]="editando()" (salvar)="salvar($event)" (cancelar)="cancelar()" />
+</section>
+
+<section class="card">
+  @if (carregando()) {
+    <p class="vazio">Carregando...</p>
+  } @else if (categorias().length === 0) {
+    <p class="vazio">Nenhuma categoria cadastrada.</p>
+  } @else {
+    <table>
+      <thead>
+        <tr><th>ID</th><th>Nome</th><th>Descrição</th><th></th></tr>
+      </thead>
+      <tbody>
+        @for (categoria of categorias(); track categoria.id) {
+          <tr>
+            <td>{{ categoria.id }}</td>
+            <td>{{ categoria.nome }}</td>
+            <td>{{ categoria.descricao }}</td>
+            <td class="acoes-celula">
+              <button type="button" class="secundario" (click)="editar(categoria)">Editar</button>
+              <button type="button" class="perigo" (click)="remover(categoria)">Remover</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</section>

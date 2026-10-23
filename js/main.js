@@ -313,6 +313,19 @@
     }
     const agendaButton = event.target.closest('[data-agenda]');
     if (agendaButton) startFlow('petAgenda', { id: Number(agendaButton.dataset.agenda) });
+    if (event.target.closest('#demo-submit') && window.Lab.demoExpect) {
+      const expect = window.Lab.demoExpect;
+      const nome = document.getElementById('demo-nome').value.trim().toLowerCase();
+      const codigo = document.getElementById('demo-codigo').value.trim();
+      if (nome === expect.nome.toLowerCase() && codigo === String(expect.codigo)) {
+        window.Lab.demoExpect = null;
+        expect.onOk();
+      } else {
+        const hint = document.querySelector('.demo-hint');
+        hint.hidden = false;
+        hint.textContent = `Escreva exatamente "${expect.nome}" no nome e "${expect.codigo}" no código de barras.`;
+      }
+    }
     const slot = event.target.closest('[data-slot]');
     if (slot && state.schedulePet) startFlow('schedule', { pet: state.schedulePet, time: slot.dataset.slot });
     const del = event.target.closest('[data-delete]');
@@ -401,7 +414,7 @@
       board.renderRun(run, index);
       updateButtons();
     },
-    form: async input => {
+    form: async (input, editable = false) => {
       board.restoreMax();
       hideForm();
       state.token++;
@@ -412,7 +425,7 @@
       state.run = null;
       state.index = -1;
       board.renderIdle([], null);
-      board.setSite('ready', { mode: 'produto-form', input });
+      board.setSite('ready', { mode: 'produto-form', input, editable });
       updateButtons();
     },
     reset: () => {

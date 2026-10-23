@@ -1,0 +1,15 @@
+<div class="cabecalho-pagina">
+  <h2>Editar produto #{{ id() }}</h2>
+</div>
+
+@if (produto(); as atual) {
+  <section class="card">
+    <app-produto-form
+      [produto]="atual"
+      [categorias]="categorias()"
+      textoBotao="Salvar"
+      (salvar)="salvar($event)"
+      (cancelar)="cancelar()"
+    />
+  </section>
+}

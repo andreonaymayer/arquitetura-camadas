@@ -1,0 +1,26 @@
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.5rem 0.4rem;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+th {
+  font-size: 0.8rem;
+  color: var(--cor-suave);
+  text-transform: uppercase;
+}
+
+.acoes-celula {
+  white-space: nowrap;
+  text-align: right;
+
+  button + button {
+    margin-left: 0.4rem;
+  }
+}

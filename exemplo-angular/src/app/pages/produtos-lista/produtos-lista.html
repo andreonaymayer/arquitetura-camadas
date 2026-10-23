@@ -1,0 +1,37 @@
+<div class="cabecalho-pagina">
+  <h2>Produtos</h2>
+  <a class="botao" routerLink="/novo/produto">Novo produto</a>
+</div>
+
+<section class="card">
+  <div class="form-grid">
+    <label>
+      Filtrar pelo nome (evento input, filtra na tela)
+      <input placeholder="Digite parte do nome" (input)="filtrar($event)" />
+    </label>
+
+    <label>
+      Buscar por código (Enter chama a API: findByCodigo)
+      <input #campoCodigo placeholder="NOTE-001" (keyup.enter)="buscarPorCodigo(campoCodigo.value)" />
+    </label>
+
+    <div class="acoes">
+      <button type="button" (click)="buscarPorCodigo(campoCodigo.value)">Buscar</button>
+      <button
+        type="button"
+        class="secundario"
+        (click)="campoCodigo.value = ''; buscarPorCodigo('')"
+      >
+        Limpar
+      </button>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <app-produto-tabela
+    [produtos]="produtosFiltrados()"
+    (editar)="editar($event)"
+    (remover)="remover($event)"
+  />
+</section>

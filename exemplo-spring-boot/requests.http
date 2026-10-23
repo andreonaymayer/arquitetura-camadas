@@ -1,0 +1,65 @@
+@host = http://localhost:8080
+
+### Criar categoria
+POST {{host}}/categorias
+Content-Type: application/json
+
+{
+  "nome": "Eletrônicos",
+  "descricao": "Aparelhos eletrônicos em geral"
+}
+
+### Listar categorias
+GET {{host}}/categorias
+
+### Buscar categoria por id
+GET {{host}}/categorias/1
+
+### Atualizar categoria
+PUT {{host}}/categorias/1
+Content-Type: application/json
+
+{
+  "nome": "Eletrônicos",
+  "descricao": "Descrição atualizada"
+}
+
+### Criar produto
+POST {{host}}/produtos
+Content-Type: application/json
+
+{
+  "codigo": "NOTE-001",
+  "nome": "Notebook 14 polegadas",
+  "preco": 3499.90,
+  "categoriaId": 1
+}
+
+### Listar produtos
+GET {{host}}/produtos
+
+### Buscar produto por id
+GET {{host}}/produtos/1
+
+### Buscar produto por código (findByCodigo, sem @Query)
+GET {{host}}/produtos/codigo/NOTE-001
+
+### Busca por categoria e faixa de preço (@Query nativa)
+GET {{host}}/produtos/busca?categoria=eletrônicos&precoMin=1000&precoMax=5000
+
+### Atualizar produto
+PUT {{host}}/produtos/1
+Content-Type: application/json
+
+{
+  "codigo": "NOTE-001",
+  "nome": "Notebook 14 polegadas",
+  "preco": 3299.90,
+  "categoriaId": 1
+}
+
+### Remover produto
+DELETE {{host}}/produtos/1
+
+### Remover categoria
+DELETE {{host}}/categorias/1

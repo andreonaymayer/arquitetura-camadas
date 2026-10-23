@@ -1,0 +1,32 @@
+.topo {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 2rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--cor-card);
+  border-bottom: 1px solid var(--cor-borda);
+
+  h1 {
+    margin: 0;
+    font-size: 1.2rem;
+  }
+
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  a {
+    color: var(--cor-suave);
+    text-decoration: none;
+    padding: 0.25rem 0;
+    border-bottom: 2px solid transparent;
+
+    &.ativo {
+      color: var(--cor-primaria);
+      border-bottom-color: var(--cor-primaria);
+    }
+  }
+}

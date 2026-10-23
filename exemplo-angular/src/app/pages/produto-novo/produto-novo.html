@@ -1,0 +1,12 @@
+<div class="cabecalho-pagina">
+  <h2>Novo produto</h2>
+</div>
+
+<section class="card">
+  <app-produto-form
+    [categorias]="categorias()"
+    textoBotao="Criar"
+    (salvar)="salvar($event)"
+    (cancelar)="cancelar()"
+  />
+</section>

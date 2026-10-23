@@ -514,3 +514,6 @@ body.has-max .backdrop { opacity: 1; pointer-events: auto; }
 .demo-form label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.8rem; font-weight: 600; color: #475569; }
 .demo-form input { font: inherit; font-size: 0.95rem; font-weight: 400; color: #0f172a; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.5rem 0.625rem; }
 .demo-form .site-btn { align-self: stretch; }
+.demo-form.editable { pointer-events: auto; }
+.demo-form.editable input:focus { outline: 2px solid #2563eb; outline-offset: 1px; }
+.demo-hint { margin: 0; font-size: 0.8rem; color: #b91c1c; }

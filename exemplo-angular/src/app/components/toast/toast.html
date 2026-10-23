@@ -1,0 +1,6 @@
+@if (notificacao.atual(); as aviso) {
+  <div class="toast" [class.erro]="aviso.tipo === 'erro'" [class.sucesso]="aviso.tipo === 'sucesso'">
+    <span>{{ aviso.texto }}</span>
+    <button type="button" class="fechar" (click)="notificacao.fechar()">×</button>
+  </div>
+}

@@ -1,0 +1,47 @@
+<form [formGroup]="form" (ngSubmit)="enviar()" class="form-grid">
+  <label>
+    Código
+    <input formControlName="codigo" [class.invalido]="invalido('codigo')" />
+    @if (invalido('codigo')) {
+      <span class="erro-campo">Informe o código (até 30 caracteres).</span>
+    }
+  </label>
+
+  <label>
+    Nome
+    <input formControlName="nome" [class.invalido]="invalido('nome')" />
+    @if (invalido('nome')) {
+      <span class="erro-campo">Informe o nome (até 120 caracteres).</span>
+    }
+  </label>
+
+  <label>
+    Preço
+    <input type="number" step="0.01" formControlName="preco" [class.invalido]="invalido('preco')" />
+    @if (invalido('preco')) {
+      <span class="erro-campo">O preço deve ser maior que zero.</span>
+    }
+  </label>
+
+  <label>
+    Categoria
+    <select formControlName="categoriaId" [class.invalido]="invalido('categoriaId')">
+      <option [ngValue]="0" disabled>Selecione</option>
+      @for (categoria of categorias(); track categoria.id) {
+        <option [ngValue]="categoria.id">{{ categoria.nome }}</option>
+      }
+    </select>
+    @if (invalido('categoriaId')) {
+      <span class="erro-campo">Escolha uma categoria.</span>
+    }
+  </label>
+
+  <div class="acoes">
+    <button type="submit">{{ textoBotao() }}</button>
+    <button type="button" class="secundario" (click)="cancelar.emit()">Cancelar</button>
+  </div>
+</form>
+
+@if (categorias().length === 0) {
+  <p class="vazio">Cadastre uma categoria antes de criar produtos.</p>
+}

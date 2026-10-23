@@ -1,0 +1,33 @@
+@if (produtos().length === 0) {
+  <p class="vazio">Nenhum produto encontrado.</p>
+} @else {
+  <table>
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Nome</th>
+        <th>Preço</th>
+        <th>Categoria</th>
+        @if (mostrarAcoes()) {
+          <th></th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (produto of produtos(); track produto.id) {
+        <tr>
+          <td>{{ produto.codigo }}</td>
+          <td>{{ produto.nome }}</td>
+          <td>{{ produto.preco | currency: 'BRL' }}</td>
+          <td>{{ produto.categoriaNome }}</td>
+          @if (mostrarAcoes()) {
+            <td class="acoes-celula">
+              <button type="button" class="secundario" (click)="editar.emit(produto.id)">Editar</button>
+              <button type="button" class="perigo" (click)="remover.emit(produto)">Remover</button>
+            </td>
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+}

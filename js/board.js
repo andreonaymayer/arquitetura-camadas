@@ -382,7 +382,9 @@
       if (mode === 'post') {
         siteView.innerHTML = '<h4>Novo pet</h4><p class="site-hint">Preencha os dados para cadastrar um pet.</p><button type="button" class="site-btn" id="open-form">Preencher formulário</button>';
       } else if (mode === 'produto-form') {
-        siteView.innerHTML = `<h4>Cadastrar produto</h4><div class="demo-form"><label>Nome<input readonly value="${esc(payload.input.nome)}"></label><label>Código de barras<input readonly value="${payload.input.codigo}"></label><button type="button" class="site-btn">Cadastrar</button></div>`;
+        const editable = Boolean(payload.editable);
+        const field = (id, label, value, placeholder) => `<label>${label}<input id="${id}" autocomplete="off" ${editable ? `placeholder="${placeholder}"` : `readonly value="${esc(value)}"`}></label>`;
+        siteView.innerHTML = `<h4>Cadastrar produto</h4><div class="demo-form${editable ? ' editable' : ''}">${field('demo-nome', 'Nome', payload.input.nome, 'Ex.: Guitarra')}${field('demo-codigo', 'Código de barras', payload.input.codigo, 'Ex.: 123')}<p class="demo-hint" hidden></p><button type="button" class="site-btn" id="demo-submit">Cadastrar</button></div>`;
       } else if (mode === 'schedule') {
         siteView.innerHTML = slotsHtml(payload, true);
       } else if (mode === 'get') {

@@ -20,7 +20,7 @@
   const GUITARRA = { nome: 'Guitarra', codigo: 123 };
   const VIOLAO = { nome: 'Violão', codigo: 456 };
 
-  const exForm = (input, title, text) => ({ title, target: laneFull(0), demo: { input, form: true }, text });
+  const exForm = (input, title, text, editable = false) => ({ title, target: laneFull(0), demo: { input, form: true, editable }, text });
 
   const ex = (input, index, lane, title, text) => ({ title, target: laneFull(lane), demo: { input, index }, text });
 
@@ -29,7 +29,7 @@
       title: 'Exemplo: cadastrar um produto',
       text: '<p>Agora vamos juntar tudo em um exemplo, <b>nas próprias raias</b>, olhando o código de perto. Quando o tutorial terminar, tudo volta ao programa dos pets.</p><p>Vamos cadastrar dois produtos em uma loja:</p><ul><li><b>Guitarra</b>, código de barras <b>123</b>: esse código <b>já existe no banco</b>, então vai dar erro, porque não se pode repetir o mesmo código de barras.</li><li><b>Violão</b>, código de barras <b>456</b>: esse código <b>não existe</b>, então vai cadastrar com sucesso.</li></ul><p>Vamos seguir cada pedido, raia por raia, sem pular nenhuma, para você ver por onde ele <b>entra</b>, o que o cursor faz linha por linha e como a resposta <b>sai</b>.</p>'
     },
-    exForm(GUITARRA, 'Guitarra (123): o formulário preenchido', '<p>Esta é a página da loja. A pessoa preencheu o formulário com o nome <b>Guitarra</b> e o código de barras <b>123</b>.</p><p>Ela ainda não clicou em <b>Cadastrar</b>: nada foi enviado.</p>'),
+    exForm(GUITARRA, 'Agora é com você: cadastre a Guitarra', '<p>Esta é a página da loja, e o formulário está vazio. Os campos são de verdade: é assim que a pessoa usa o sistema.</p><ol><li>Escreva <b>Guitarra</b> no nome</li><li>Escreva <b>123</b> no código de barras</li><li>Clique em <b>Cadastrar</b></li></ol><p>O botão <b>Avançar</b> só libera depois que você cadastrar.</p>', true),
     ex(GUITARRA, 0, 0, 'Guitarra (123): a pessoa clica em Cadastrar', '<p>Agora a pessoa clica em <b>Cadastrar</b>. A página fica carregando enquanto o front monta o pedido e envia.</p><p>Para saber onde bater, o front usa a rota. A rota completa junta duas partes do Controller:</p><ul><li><code>@RequestMapping("/produtos")</code>: a rota base, <code>/produtos</code></li><li><code>@PostMapping("/add-item")</code>: soma o <code>/add-item</code></li></ul><p>Juntando o <code>/produtos</code> com o <code>/add-item</code>, a rota fica: <code>POST /produtos/add-item</code>.</p><p>Os dados vão no corpo do pedido, em JSON.</p>'),
     ex(GUITARRA, 1, 1, 'Guitarra (123): o Controller recebe', '<p>O pedido chegou ao Controller pela rota <code>POST /produtos/add-item</code>, e é por isso que o método <code>cadastrar</code> é chamado. (O <code>@GetMapping</code>, sem parênteses, usaria só a rota base: <code>GET /produtos</code>.)</p><p>O <code>dto</code> é uma <b>variável parâmetro</b> da função. O <code>@RequestBody</code> pega o JSON e preenche essa variável. Olhe o painel <b>Variáveis</b>: dentro do <code>dto</code> estão os valores, e dá para pegar cada um com <code>dto.getNome()</code> e <code>dto.getCodigoDeBarras()</code>.</p><p>O cursor está na linha que entrega o <code>dto</code> ao Service.</p>'),
     ex(GUITARRA, 2, 2, 'Guitarra (123): o Service pergunta ao banco', '<p>No Service, o cursor para na linha que <b>pergunta ao banco</b>: existe algum produto com o código 123? Essa regra existe porque não pode haver dois produtos com o mesmo código de barras.</p><p>O Service não fala com o banco. Ele pede ao <b>Repository</b>.</p>'),
@@ -39,7 +39,7 @@
     ex(GUITARRA, 6, 2, 'Guitarra (123): o cursor entra no if', '<p>De volta ao Service, <code>codigoExiste</code> vale <code>true</code>. A condição do <code>if</code> é verdadeira, então o cursor <b>entra no bloco</b>, executa o <code>throw</code> e o fluxo <b>para ali</b>. As linhas de baixo nunca rodam e nada é salvo.</p><p>O erro sobe para o Controller.</p>'),
     ex(GUITARRA, 7, 1, 'Guitarra (123): o Spring converte o erro em 400', '<p>O erro passa pelo Controller. Quem o converte é o Spring: ele captura o <code>ResponseStatusException</code> e responde <b>400 Bad Request</b>. O Controller não precisa escrever nada para isso.</p>'),
     ex(GUITARRA, 8, 0, 'Guitarra (123): o erro chega ao front', '<p>A resposta 400 chega ao front, que avisa que o código de barras já está cadastrado. Nada foi salvo no banco.</p>'),
-    exForm(VIOLAO, 'Agora vamos cadastrar o Violão (456)', '<p>Agora vamos cadastrar o <b>Violão</b>. A pessoa preencheu o formulário com o nome <b>Violão</b> e o código de barras <b>456</b>.</p><p>Ela ainda não clicou em <b>Cadastrar</b>: nada foi enviado.</p>'),
+    exForm(VIOLAO, 'Agora é com você: cadastre o Violão', '<p>De novo, o formulário está vazio e você faz o papel da pessoa.</p><ol><li>Escreva <b>Violão</b> no nome</li><li>Escreva <b>456</b> no código de barras</li><li>Clique em <b>Cadastrar</b></li></ol>', true),
     ex(VIOLAO, 0, 0, 'Violão (456): a pessoa clica em Cadastrar', '<p>A pessoa clica em <b>Cadastrar</b> e o front envia o pedido.</p><p>A rota é a mesma: <code>POST /produtos/add-item</code>. Só os dados do corpo mudam.</p>'),
     ex(VIOLAO, 1, 1, 'Violão (456): o Controller recebe', '<p>O pedido entra pela mesma rota. Agora o <code>dto</code> guarda o nome <b>"Violão"</b> e o código de barras <b>456</b>: <code>dto.getNome()</code> e <code>dto.getCodigoDeBarras()</code>. O cursor entrega o <code>dto</code> ao Service.</p>'),
     ex(VIOLAO, 2, 2, 'Violão (456): o Service pergunta ao banco', '<p>O cursor para na linha que pergunta ao banco: existe algum produto com o código 456? Quem leva a pergunta é o <b>Repository</b>.</p>'),
@@ -287,9 +287,11 @@
       titleEl.append(' ', heart);
     }
     textEl.innerHTML = step.text;
+    const editable = Boolean(step.demo && step.demo.editable);
+    window.Lab.demoExpect = editable ? { nome: step.demo.input.nome, codigo: step.demo.input.codigo, onOk: () => go(1) } : null;
     if (step.demo) {
       demoOn = true;
-      const shown = step.demo.form ? window.Lab.demo.form(step.demo.input) : window.Lab.demo.show(step.demo.input, step.demo.index);
+      const shown = step.demo.form ? window.Lab.demo.form(step.demo.input, editable) : window.Lab.demo.show(step.demo.input, step.demo.index);
       shown.then(() => {
         place();
         follow();
@@ -300,6 +302,7 @@
     }
     barFill.style.width = `${((index + 1) / STEPS.length) * 100}%`;
     prevBtn.disabled = index === 0;
+    nextBtn.disabled = editable;
     nextBtn.textContent = step.last ? 'Concluir' : 'Avançar ▶';
     place();
   };

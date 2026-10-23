@@ -1,0 +1,21 @@
+<form [formGroup]="form" (ngSubmit)="enviar()" class="form-grid">
+  <label>
+    Nome
+    <input formControlName="nome" [class.invalido]="nomeInvalido" />
+    @if (nomeInvalido) {
+      <span class="erro-campo">Informe o nome (até 80 caracteres).</span>
+    }
+  </label>
+
+  <label>
+    Descrição
+    <input formControlName="descricao" />
+  </label>
+
+  <div class="acoes">
+    <button type="submit">{{ categoria() ? 'Salvar' : 'Criar' }}</button>
+    @if (categoria()) {
+      <button type="button" class="secundario" (click)="cancelar.emit()">Cancelar</button>
+    }
+  </div>
+</form>

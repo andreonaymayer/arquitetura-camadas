@@ -1,0 +1,38 @@
+<div class="cabecalho-pagina">
+  <h2>Buscar por categoria</h2>
+</div>
+
+<section class="card">
+  <p class="dica">Usa a consulta nativa da API: JOIN entre produto e categoria com faixa de preço.</p>
+  <form [formGroup]="form" (ngSubmit)="buscar()" class="form-grid">
+    <label>
+      Categoria
+      <select formControlName="categoria">
+        <option value="" disabled>Selecione</option>
+        @for (categoria of categorias(); track categoria.id) {
+          <option [value]="categoria.nome">{{ categoria.nome }}</option>
+        }
+      </select>
+    </label>
+
+    <label>
+      Preço mínimo
+      <input type="number" step="0.01" formControlName="precoMin" />
+    </label>
+
+    <label>
+      Preço máximo
+      <input type="number" step="0.01" formControlName="precoMax" />
+    </label>
+
+    <div class="acoes">
+      <button type="submit">Buscar</button>
+    </div>
+  </form>
+</section>
+
+@if (resultado(); as lista) {
+  <section class="card">
+    <app-produto-tabela [produtos]="lista" [mostrarAcoes]="false" />
+  </section>
+}

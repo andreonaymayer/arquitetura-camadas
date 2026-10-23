@@ -1,0 +1,33 @@
+.toast {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 360px;
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 15%);
+
+  &.erro {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  &.sucesso {
+    background: #dcfce7;
+    color: var(--cor-ok);
+  }
+
+  .fechar {
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-size: 1.2rem;
+    padding: 0 0.25rem;
+    line-height: 1;
+  }
+}
