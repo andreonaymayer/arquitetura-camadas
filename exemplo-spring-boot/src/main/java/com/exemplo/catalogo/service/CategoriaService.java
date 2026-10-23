@@ -3,6 +3,7 @@ package com.exemplo.catalogo.service;
 import com.exemplo.catalogo.dto.CategoriaRequest;
 import com.exemplo.catalogo.dto.CategoriaResponse;
 import com.exemplo.catalogo.entity.Categoria;
+import com.exemplo.catalogo.factory.CategoriaFactory;
 import com.exemplo.catalogo.repository.CategoriaRepository;
 import com.exemplo.catalogo.repository.ProdutoRepository;
 import java.util.ArrayList;
@@ -17,43 +18,48 @@ public class CategoriaService {
 
     private final CategoriaRepository categoriaRepository;
     private final ProdutoRepository produtoRepository;
+    private final CategoriaFactory categoriaFactory;
 
-    public CategoriaService(CategoriaRepository categoriaRepository, ProdutoRepository produtoRepository) {
+    public CategoriaService(
+            CategoriaRepository categoriaRepository,
+            ProdutoRepository produtoRepository,
+            CategoriaFactory categoriaFactory) {
         this.categoriaRepository = categoriaRepository;
         this.produtoRepository = produtoRepository;
+        this.categoriaFactory = categoriaFactory;
     }
 
     @Transactional(readOnly = true)
     public List<CategoriaResponse> listar() {
         List<CategoriaResponse> respostas = new ArrayList<>();
         for (Categoria categoria : categoriaRepository.findAll()) {
-            respostas.add(CategoriaResponse.de(categoria));
+            respostas.add(categoriaFactory.criarResponse(categoria));
         }
         return respostas;
     }
 
     @Transactional(readOnly = true)
     public CategoriaResponse buscarPorId(Long id) {
-        return CategoriaResponse.de(buscarEntidade(id));
+        return categoriaFactory.criarResponse(buscarEntidade(id));
     }
 
     @Transactional
     public CategoriaResponse criar(CategoriaRequest request) {
-        if (categoriaRepository.existsByNome(request.nome())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Já existe categoria com o nome " + request.nome());
+        if (categoriaRepository.existsByNome(request.getNome())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Já existe categoria com o nome " + request.getNome());
         }
         Categoria categoria = new Categoria();
-        categoria.setNome(request.nome());
-        categoria.setDescricao(request.descricao());
-        return CategoriaResponse.de(categoriaRepository.save(categoria));
+        categoria.setNome(request.getNome());
+        categoria.setDescricao(request.getDescricao());
+        return categoriaFactory.criarResponse(categoriaRepository.save(categoria));
     }
 
     @Transactional
     public CategoriaResponse atualizar(Long id, CategoriaRequest request) {
         Categoria categoria = buscarEntidade(id);
-        categoria.setNome(request.nome());
-        categoria.setDescricao(request.descricao());
-        return CategoriaResponse.de(categoriaRepository.save(categoria));
+        categoria.setNome(request.getNome());
+        categoria.setDescricao(request.getDescricao());
+        return categoriaFactory.criarResponse(categoriaRepository.save(categoria));
     }
 
     @Transactional

@@ -1,10 +1,32 @@
 package com.exemplo.catalogo.dto;
 
-import com.exemplo.catalogo.entity.Categoria;
+public class CategoriaResponse {
 
-public record CategoriaResponse(Long id, String nome, String descricao) {
+    private Long id;
+    private String nome;
+    private String descricao;
 
-    public static CategoriaResponse de(Categoria categoria) {
-        return new CategoriaResponse(categoria.getId(), categoria.getNome(), categoria.getDescricao());
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public String getDescricao() {
+        return descricao;
+    }
+
+    public void setDescricao(String descricao) {
+        this.descricao = descricao;
     }
 }

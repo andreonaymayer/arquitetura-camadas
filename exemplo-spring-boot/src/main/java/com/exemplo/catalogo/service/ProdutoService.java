@@ -4,6 +4,7 @@ import com.exemplo.catalogo.dto.ProdutoRequest;
 import com.exemplo.catalogo.dto.ProdutoResponse;
 import com.exemplo.catalogo.entity.Categoria;
 import com.exemplo.catalogo.entity.Produto;
+import com.exemplo.catalogo.factory.ProdutoFactory;
 import com.exemplo.catalogo.repository.CategoriaRepository;
 import com.exemplo.catalogo.repository.ProdutoRepository;
 import java.math.BigDecimal;
@@ -19,31 +20,36 @@ public class ProdutoService {
 
     private final ProdutoRepository produtoRepository;
     private final CategoriaRepository categoriaRepository;
+    private final ProdutoFactory produtoFactory;
 
-    public ProdutoService(ProdutoRepository produtoRepository, CategoriaRepository categoriaRepository) {
+    public ProdutoService(
+            ProdutoRepository produtoRepository,
+            CategoriaRepository categoriaRepository,
+            ProdutoFactory produtoFactory) {
         this.produtoRepository = produtoRepository;
         this.categoriaRepository = categoriaRepository;
+        this.produtoFactory = produtoFactory;
     }
 
     @Transactional(readOnly = true)
     public List<ProdutoResponse> listar() {
         List<ProdutoResponse> respostas = new ArrayList<>();
         for (Produto produto : produtoRepository.findAll()) {
-            respostas.add(ProdutoResponse.de(produto));
+            respostas.add(produtoFactory.criarResponse(produto));
         }
         return respostas;
     }
 
     @Transactional(readOnly = true)
     public ProdutoResponse buscarPorId(Long id) {
-        return ProdutoResponse.de(buscarEntidade(id));
+        return produtoFactory.criarResponse(buscarEntidade(id));
     }
 
     @Transactional(readOnly = true)
     public ProdutoResponse buscarPorCodigo(String codigo) {
         Produto produto = produtoRepository.findByCodigo(codigo)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Produto não encontrado"));
-        return ProdutoResponse.de(produto);
+        return produtoFactory.criarResponse(produto);
     }
 
     @Transactional(readOnly = true)
@@ -52,31 +58,31 @@ public class ProdutoService {
         List<Produto> produtos = produtoRepository.buscarPorCategoriaEFaixaDePreco(categoria, precoMin, precoMax);
         List<ProdutoResponse> respostas = new ArrayList<>();
         for (Produto produto : produtos) {
-            respostas.add(ProdutoResponse.de(produto));
+            respostas.add(produtoFactory.criarResponse(produto));
         }
         return respostas;
     }
 
     @Transactional
     public ProdutoResponse criar(ProdutoRequest request) {
-        if (produtoRepository.existsByCodigo(request.codigo())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Já existe produto com o código " + request.codigo());
+        if (produtoRepository.existsByCodigo(request.getCodigo())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Já existe produto com o código " + request.getCodigo());
         }
         Produto produto = new Produto();
         preencher(produto, request);
-        return ProdutoResponse.de(produtoRepository.save(produto));
+        return produtoFactory.criarResponse(produtoRepository.save(produto));
     }
 
     @Transactional
     public ProdutoResponse atualizar(Long id, ProdutoRequest request) {
         Produto produto = buscarEntidade(id);
-        produtoRepository.findByCodigo(request.codigo())
+        produtoRepository.findByCodigo(request.getCodigo())
                 .filter(existente -> !existente.getId().equals(id))
                 .ifPresent(existente -> {
-                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Já existe produto com o código " + request.codigo());
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Já existe produto com o código " + request.getCodigo());
                 });
         preencher(produto, request);
-        return ProdutoResponse.de(produtoRepository.save(produto));
+        return produtoFactory.criarResponse(produtoRepository.save(produto));
     }
 
     @Transactional
@@ -85,11 +91,11 @@ public class ProdutoService {
     }
 
     private void preencher(Produto produto, ProdutoRequest request) {
-        Categoria categoria = categoriaRepository.findById(request.categoriaId())
+        Categoria categoria = categoriaRepository.findById(request.getCategoriaId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Categoria informada não existe"));
-        produto.setCodigo(request.codigo());
-        produto.setNome(request.nome());
-        produto.setPreco(request.preco());
+        produto.setCodigo(request.getCodigo());
+        produto.setNome(request.getNome());
+        produto.setPreco(request.getPreco());
         produto.setCategoria(categoria);
     }
 

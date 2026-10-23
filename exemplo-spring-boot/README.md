@@ -14,7 +14,8 @@ src/main/java/com/exemplo/catalogo
 ├── service/      regras de negócio, validações e transações
 ├── repository/   acesso ao banco (interfaces Spring Data JPA)
 ├── entity/       classes mapeadas para as tabelas (@Entity)
-└── dto/          objetos de entrada (Request) e saída (Response) da API
+├── dto/          objetos de entrada (Request) e saída (Response) da API
+└── factory/      cria o Response a partir da entidade (usado pelo Service)
 ```
 
 Fluxo de um `POST /produtos`:
@@ -22,7 +23,42 @@ Fluxo de um `POST /produtos`:
 1. `ProdutoController.criar` recebe o JSON, converte em `ProdutoRequest` e valida (`@Valid`).
 2. `ProdutoService.criar` checa se o código já existe, busca a categoria e monta a entidade `Produto`.
 3. `ProdutoRepository.save` grava no PostgreSQL.
-4. O `Service` converte a entidade em `ProdutoResponse` e o `Controller` devolve `201 Created`.
+4. O `Service` converte a entidade em `ProdutoResponse` usando o `ProdutoFactory`, e o `Controller` devolve `201 Created`.
+
+### DTOs e a Factory
+
+**DTO** (Data Transfer Object) é o objeto que viaja entre o cliente (Angular, Postman) e a API. Ele é diferente da **entidade**, que representa a tabela do banco. Neste projeto, um produto existe em três formas:
+
+| Classe | Papel | Onde vive |
+| --- | --- | --- |
+| `ProdutoRequest` | o que o cliente **envia** (`codigo`, `nome`, `preco`, `categoriaId`) | `dto/`, entra pelo Controller |
+| `Produto` | a linha da tabela `produto` | `entity/`, só Service e Repository usam |
+| `ProdutoResponse` | o que a API **devolve** (inclui `id` e `categoriaNome`) | `dto/`, sai pelo Controller |
+
+Fluxo de um `POST /produtos`:
+
+```
+JSON  →  ProdutoRequest  →  Produto (entidade)  →  banco
+                                  ↓
+JSON  ←  ProdutoResponse  ←  ProdutoFactory
+```
+
+**Por que não devolver a entidade direto?**
+
+1. **Controle do que sai.** A entidade pode ter campos que o cliente não deve ver. O `Response` expõe só o necessário.
+2. **Controle do que entra.** O `Request` não tem `id`: o cliente não escolhe o id, o banco gera. Também é nele que ficam as validações (`@NotBlank`, `@Size`, `@DecimalMin`). Se a entidade fosse recebida direto, o cliente poderia mandar campos que não deveria.
+3. **Formato próprio para a API.** O `ProdutoResponse` traz `categoriaId` e `categoriaNome` direto, em vez de um objeto `Categoria` inteiro dentro do produto. É mais simples para quem consome.
+4. **Evita problemas do JPA.** A entidade `Produto` aponta para `Categoria` com carregamento preguiçoso (`LAZY`). Serializar a entidade para JSON pode causar `LazyInitializationException` ou laços infinitos quando as entidades se apontam entre si.
+5. **Banco e API evoluem separados.** Se você renomear uma coluna ou separar uma tabela, só o Service e a Factory mudam. O JSON que o Angular consome continua o mesmo.
+
+**E a Factory?** A `ProdutoFactory` (e a `CategoriaFactory`) tem uma única função: **converter** a entidade em `Response`. Ela não tem regra de negócio, não acessa o banco e não valida nada. Recebe um objeto e devolve outro, campo a campo:
+
+```java
+response.setCodigo(produto.getCodigo());
+response.setCategoriaNome(produto.getCategoria().getNome());
+```
+
+Quem decide o que fazer (criar, conferir se o código já existe, buscar a categoria) é o Service. A Factory só faz a conversão. Assim o Service fica enxuto e a conversão fica em um lugar só: se o `Response` ganhar um campo novo, você muda a Factory e todos os endpoints passam a devolvê-lo.
 
 ### Pontos para estudar
 
@@ -32,7 +68,7 @@ Fluxo de um `POST /produtos`:
 | Consulta SQL própria com `@Query(nativeQuery = true)` e JOIN, devolvendo `Produto` | `ProdutoRepository.buscarPorCategoriaEFaixaDePreco` |
 | Relacionamento `@ManyToOne` com FK | `Produto.categoria` |
 | Validação de entrada | `ProdutoRequest`, `CategoriaRequest` |
-| Entidade nunca sai da API: o método estático `de(...)` converte entidade em DTO | `ProdutoResponse.de(...)`, usado também na busca da query nativa |
+| Entidade nunca sai da API: uma classe Factory cria o Response a partir da entidade | `factory/ProdutoFactory`, usado também na busca da query nativa |
 | Erros HTTP (404, 409, 400) com `ResponseStatusException` | `service/` |
 
 ## Pasta `sql/` (um "Flyway de mentira")
