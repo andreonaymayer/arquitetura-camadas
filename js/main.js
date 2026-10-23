@@ -410,9 +410,9 @@
       state.index = index;
       board.renderIdle(run.base, null);
       const step = run.steps[index];
-      await board.travel(null, step.at, step.kind, step.label, 10);
       board.renderRun(run, index);
       updateButtons();
+      await board.travel(null, step.at, step.kind, step.label, 10);
     },
     form: async (input, editable = false) => {
       board.restoreMax();
