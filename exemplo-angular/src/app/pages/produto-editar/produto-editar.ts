@@ -1,12 +1,11 @@
 import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Store } from '@ngrx/store';
 import { ProdutoForm } from '../../components/produto-form/produto-form';
 import { NotificacaoService } from '../../core/notificacao.service';
+import { Categoria } from '../../models/categoria';
 import { Produto, ProdutoRequest } from '../../models/produto';
+import { CategoriaService } from '../../services/categoria.service';
 import { ProdutoService } from '../../services/produto.service';
-import { CategoriasActions } from '../../store/categorias/categorias.actions';
-import { categoriasFeature } from '../../store/categorias/categorias.reducer';
 
 @Component({
   selector: 'app-produto-editar',
@@ -18,15 +17,18 @@ export class ProdutoEditar implements OnInit {
   private readonly produtoService = inject(ProdutoService);
   private readonly notificacao = inject(NotificacaoService);
   private readonly router = inject(Router);
-  private readonly store = inject(Store);
+  private readonly categoriaService = inject(CategoriaService);
 
   readonly id = input.required<string>();
 
   protected readonly produto = signal<Produto | null>(null);
-  protected readonly categorias = this.store.selectSignal(categoriasFeature.selectItens);
+  protected readonly categorias = signal<Categoria[]>([]);
 
   ngOnInit(): void {
-    this.store.dispatch(CategoriasActions.carregar());
+    this.categoriaService.listar().subscribe({
+      next: (lista) => this.categorias.set(lista),
+      error: () => this.categorias.set([]),
+    });
     this.produtoService.buscarPorId(Number(this.id())).subscribe({
       next: (produto) => this.produto.set(produto),
       error: () => this.router.navigate(['/produtos']),

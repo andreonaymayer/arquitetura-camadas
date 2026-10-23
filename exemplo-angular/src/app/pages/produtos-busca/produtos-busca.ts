@@ -1,11 +1,10 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Store } from '@ngrx/store';
 import { ProdutoTabela } from '../../components/produto-tabela/produto-tabela';
+import { Categoria } from '../../models/categoria';
 import { ProdutoBusca } from '../../models/produto';
+import { CategoriaService } from '../../services/categoria.service';
 import { ProdutoService } from '../../services/produto.service';
-import { CategoriasActions } from '../../store/categorias/categorias.actions';
-import { categoriasFeature } from '../../store/categorias/categorias.reducer';
 
 @Component({
   selector: 'app-produtos-busca',
@@ -15,10 +14,10 @@ import { categoriasFeature } from '../../store/categorias/categorias.reducer';
 })
 export class ProdutosBusca implements OnInit {
   private readonly produtoService = inject(ProdutoService);
-  private readonly store = inject(Store);
+  private readonly categoriaService = inject(CategoriaService);
   private readonly fb = inject(FormBuilder);
 
-  protected readonly categorias = this.store.selectSignal(categoriasFeature.selectItens);
+  protected readonly categorias = signal<Categoria[]>([]);
   protected readonly resultado = signal<ProdutoBusca[] | null>(null);
 
   protected readonly form = this.fb.nonNullable.group({
@@ -28,7 +27,10 @@ export class ProdutosBusca implements OnInit {
   });
 
   ngOnInit(): void {
-    this.store.dispatch(CategoriasActions.carregar());
+    this.categoriaService.listar().subscribe({
+      next: (lista) => this.categorias.set(lista),
+      error: () => this.categorias.set([]),
+    });
   }
 
   protected buscar(): void {

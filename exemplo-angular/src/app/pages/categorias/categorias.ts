@@ -1,9 +1,8 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { Store } from '@ngrx/store';
 import { CategoriaForm } from '../../components/categoria-form/categoria-form';
+import { NotificacaoService } from '../../core/notificacao.service';
 import { Categoria, CategoriaRequest } from '../../models/categoria';
-import { CategoriasActions } from '../../store/categorias/categorias.actions';
-import { categoriasFeature } from '../../store/categorias/categorias.reducer';
+import { CategoriaService } from '../../services/categoria.service';
 
 @Component({
   selector: 'app-categorias',
@@ -12,23 +11,35 @@ import { categoriasFeature } from '../../store/categorias/categorias.reducer';
   styleUrl: './categorias.scss',
 })
 export class Categorias implements OnInit {
-  private readonly store = inject(Store);
+  private readonly categoriaService = inject(CategoriaService);
+  private readonly notificacao = inject(NotificacaoService);
 
-  protected readonly categorias = this.store.selectSignal(categoriasFeature.selectItens);
-  protected readonly carregando = this.store.selectSignal(categoriasFeature.selectCarregando);
+  protected readonly categorias = signal<Categoria[]>([]);
   protected readonly editando = signal<Categoria | null>(null);
 
   ngOnInit(): void {
-    this.store.dispatch(CategoriasActions.carregar());
+    this.carregar();
   }
 
   protected salvar(request: CategoriaRequest): void {
     const atual = this.editando();
     if (atual) {
-      this.store.dispatch(CategoriasActions.atualizar({ id: atual.id, request }));
-      this.editando.set(null);
+      this.categoriaService.atualizar(atual.id, request).subscribe({
+        next: () => {
+          this.notificacao.sucesso('Categoria atualizada');
+          this.editando.set(null);
+          this.carregar();
+        },
+        error: () => undefined,
+      });
     } else {
-      this.store.dispatch(CategoriasActions.criar({ request }));
+      this.categoriaService.criar(request).subscribe({
+        next: () => {
+          this.notificacao.sucesso('Categoria criada');
+          this.carregar();
+        },
+        error: () => undefined,
+      });
     }
   }
 
@@ -41,8 +52,22 @@ export class Categorias implements OnInit {
   }
 
   protected remover(categoria: Categoria): void {
-    if (confirm(`Remover a categoria "${categoria.nome}"?`)) {
-      this.store.dispatch(CategoriasActions.remover({ id: categoria.id }));
+    if (!confirm(`Remover a categoria "${categoria.nome}"?`)) {
+      return;
     }
+    this.categoriaService.remover(categoria.id).subscribe({
+      next: () => {
+        this.notificacao.sucesso('Categoria removida');
+        this.carregar();
+      },
+      error: () => undefined,
+    });
+  }
+
+  private carregar(): void {
+    this.categoriaService.listar().subscribe({
+      next: (lista) => this.categorias.set(lista),
+      error: () => this.categorias.set([]),
+    });
   }
 }
