@@ -35,16 +35,16 @@ class PetController {
 
     const steps = [
       {
-        at: FRONT, kind: 'req', label: 'POST /pets',
+        at: FRONT, kind: 'req', label: 'POST /pets/cadastrar',
         title: 'O Front-End monta e envia a requisição',
         text: `A pessoa preencheu o formulário (nome "${trimmed || '(vazio)'}", espécie "${species}") e clicou em Enviar. O navegador transforma isso em uma requisição HTTP POST com os dados em formato JSON e manda para o servidor.`,
-        code: request('POST', '/pets', dto)
+        code: request('POST', '/pets/cadastrar', dto)
       },
       {
-        at: CONTROLLER, kind: 'req', label: 'POST /pets',
+        at: CONTROLLER, kind: 'req', label: 'POST /pets/cadastrar',
         title: 'O Controller recebe a requisição',
-        text: 'O Spring olha o método (POST) e o caminho (/pets) e encontra o método do Controller que atende essa rota. O Controller não toma decisões: ele só recebe o JSON e repassa o trabalho para o Service.',
-        code: controllerCode('@PostMapping', 'ResponseEntity<Pet> criar(\n      @RequestBody PetDto dto) {\n\x01    Pet pet = servico.criar(dto);\n    return ResponseEntity\n      .status(201)\n      .body(pet);')
+        text: 'O Spring olha o método (POST) e o caminho (/pets/cadastrar) e encontra o método do Controller que atende essa rota: a rota base /pets (do @RequestMapping) mais o /cadastrar (do @PostMapping). O Controller não toma decisões: ele só recebe o JSON e repassa o trabalho para o Service.',
+        code: controllerCode('@PostMapping("/cadastrar")', 'ResponseEntity<Pet> criar(\n      @RequestBody PetDto dto) {\n\x01    Pet pet = servico.criar(dto);\n    return ResponseEntity\n      .status(201)\n      .body(pet);')
       }
     ];
 
@@ -121,7 +121,7 @@ class PetController {
         badge: { text: '201 Created', tone: 'ok' },
         title: 'O Controller escolhe o status 201 Created',
         text: 'Como um recurso novo foi criado, o status correto é 201 Created (e não um simples 200). O Controller empacota o Pet e o status em uma ResponseEntity.',
-        code: controllerCode('@PostMapping', 'ResponseEntity<Pet> criar(\n      @RequestBody PetDto dto) {\n    Pet pet = servico.criar(dto);\n\x01    return ResponseEntity\n\x01      .status(201)\n\x01      .body(pet);') + '\n\n// resposta: 201 Created'
+        code: controllerCode('@PostMapping("/cadastrar")', 'ResponseEntity<Pet> criar(\n      @RequestBody PetDto dto) {\n    Pet pet = servico.criar(dto);\n\x01    return ResponseEntity\n\x01      .status(201)\n\x01      .body(pet);') + '\n\n// resposta: 201 Created'
       },
       {
         at: FRONT, kind: 'res', label: '201',
@@ -164,7 +164,7 @@ class PetController {
         {
           at: CONTROLLER, kind: 'req', label: 'GET /pets',
           title: 'O Controller recebe a requisição',
-          text: 'A rota GET /pets é encaminhada para o método listar(). Como não há nada a validar, o Controller apenas pede os dados ao Service.',
+          text: 'A rota GET /pets é encaminhada para o método listar(). Repare que o @GetMapping vem sem parênteses: sem nada dentro dele, a rota é só a rota base, /pets. Como não há nada a validar, o Controller apenas pede os dados ao Service.',
           code: controllerCode('@GetMapping', 'ResponseEntity<List<Pet>> listar() {\n\x01    List<Pet> pets = servico.findAll();\n    return ResponseEntity.ok(pets);')
         },
         {
@@ -638,7 +638,7 @@ ${markReturn ? MARK : ''}    return ResponseEntity.ok(agendamento);
       [null, 'class PetService {'],
       [null, '  private final PetRepository repositorio;'],
       [null, ''],
-      [null, '  Pet editar(Long id, PetDto dto) {'],
+      [null, '  Pet editar(PetDto dto) {'],
       ['vazioCall', '    boolean nomeVazio = dto.nome().isBlank();'],
       ['vazioIf', `    if (nomeVazio) {   // ${notes.vazio || 'OK'}`],
       ['vazio', '      throw new ResponseStatusException('],
@@ -653,7 +653,7 @@ ${markReturn ? MARK : ''}    return ResponseEntity.ok(agendamento);
       ['grande', '        "Nome muito longo");'],
       [null, '    }'],
       [null, ''],
-      ['busca', '    Optional<Pet> resultado = repositorio.findById(id);'],
+      ['busca', '    Optional<Pet> resultado = repositorio.findById(dto.id());'],
       ['achou', '    if (resultado.isEmpty()) {   // OK: achou'],
       ['achou', '      throw new ResponseStatusException('],
       ['achou', '        HttpStatus.NOT_FOUND,'],
@@ -674,24 +674,24 @@ ${markReturn ? MARK : ''}    return ResponseEntity.ok(agendamento);
   const buildEdit = (pets, nextId, { id, nome }, env) => {
     const target = pets.find(p => p.id === id);
     const novo = nome.trim();
-    const route = `PUT /pets/${id}`;
-    const body = { nome: novo };
+    const route = 'PUT /pets/editar';
+    const body = { id, nome: novo };
     const reason = novo.length === 0 ? 'O nome é obrigatório' : novo.length > 30 ? 'O nome deve ter até 30 caracteres' : null;
-    const controller = marks => controllerCode('@PutMapping("/{id}")', `ResponseEntity<Pet> editar(\n      @PathVariable Long id,\n      @RequestBody PetDto dto) {\n${marks.call ? MARK : ''}    Pet pet = servico.editar(id, dto);\n${marks.ret ? MARK : ''}    return ResponseEntity.ok(pet);`);
+    const controller = marks => controllerCode('@PutMapping("/editar")', `ResponseEntity<Pet> editar(\n      @RequestBody PetDto dto) {\n${marks.call ? MARK : ''}    Pet pet = servico.editar(dto);\n${marks.ret ? MARK : ''}    return ResponseEntity.ok(pet);`);
 
     const steps = [
       {
         at: FRONT, kind: 'req', label: route,
         title: 'O Front-End envia o novo nome',
-        text: `A pessoa clicou em Editar no pet de ID ${id}, digitou o nome "${novo || '(vazio)'}" e salvou. O ID vai na URL e o nome novo vai no corpo da requisição. Para alterar algo que já existe usamos o método PUT.`,
-        code: request('PUT', `/pets/${id}`, body)
+        text: `A pessoa clicou em Editar no pet de ID ${id}, digitou o nome "${novo || '(vazio)'}" e salvou. O id do pet e o nome novo vão no corpo da requisição. A rota é a rota base /pets mais o /editar. Para alterar algo que já existe usamos o método PUT.`,
+        code: request('PUT', '/pets/editar', body)
       },
       {
         at: CONTROLLER, kind: 'req', label: route,
         title: 'O Controller recebe a requisição',
-        text: 'O @PutMapping liga a rota ao método editar(). O @PathVariable pega o id da URL e o @RequestBody converte o JSON em PetDto. Depois é só entregar ao Service.',
+        text: 'O @PutMapping("/editar") soma o /editar à rota base /pets e liga a rota ao método editar(). O @RequestBody converte o JSON, com o id e o nome novo, em PetDto. Depois é só entregar ao Service.',
         code: controller({ call: true }),
-        vars: [['servico', 'PetService'], ['id', `${id}L`], ['dto', `PetDto(nome="${novo}")`]]
+        vars: [['servico', 'PetService'], ['dto', `PetDto(id=${id}, nome="${novo}")`]]
       }
     ];
 

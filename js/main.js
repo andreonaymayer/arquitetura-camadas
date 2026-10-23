@@ -141,10 +141,10 @@
   const startFlow = (kind, input) => {
     const run = flows[kind](clone(store.pets), store.nextId, input, { agenda: clone(store.agenda), nextAgendaId: store.nextAgendaId });
     run.title = {
-      post: 'POST /pets — Cadastrar Pet',
+      post: 'POST /pets/cadastrar — Cadastrar Pet',
       get: 'GET /pets — Listar Pets',
       schedule: `POST /agendamentos — Agendar ${input.time}`,
-      edit: `PUT /pets/${input.id} — Editar nome`,
+      edit: 'PUT /pets/editar — Editar nome',
       petAgenda: `GET /agendamentos — Agenda do pet ${input.id}`,
       delete: `DELETE /pets/${input.id} — ${store.pets.some(p => p.id === input.id) ? 'Sucesso' : 'ID inexistente'}`
     }[kind];
