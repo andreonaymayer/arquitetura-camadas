@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Arquitetura em Camadas — Controller, Service e Repository</title>
+  <meta name="description" content="Dashboard interativo para entender visualmente a arquitetura Back-End em camadas.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%2360a5fa%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Crect x=%273%27 y=%273%27 width=%2718%27 height=%277%27 rx=%272%27/%3E%3Crect x=%273%27 y=%2714%27 width=%2718%27 height=%277%27 rx=%272%27/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>Arquitetura Back-End em Camadas</h1>
+    <p>Dispare uma requisição e acompanhe o caminho do dado: <b>Front-End → Controller → Service → Repository → Banco</b> (e a volta da resposta).</p>
+    <button type="button" class="btn ghost small" id="btn-tutorial">Tutorial</button>
+  </header>
+
+
+  <main class="board" id="board" aria-label="Diagrama de raias">
+    <div class="lanes" id="lanes"></div>
+  </main>
+
+  <footer class="dock">
+    <section class="explain" id="explain" aria-live="polite"></section>
+    <section class="controls" aria-label="Painel de controle">
+      <div class="group">
+        <span class="group-title">Cenários</span>
+        <div class="dropdown" id="scenario">
+          <button type="button" class="dd-btn" aria-haspopup="listbox" aria-expanded="false">
+            <span>Escolha um cenário…</span>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
+          </button>
+          <ul class="dd-list" role="listbox" hidden>
+            <li role="option" tabindex="-1" data-value="post"><b>POST</b> Cadastrar Pet</li>
+            <li role="option" tabindex="-1" data-value="get"><b>GET</b> Listar Pets</li>
+            <li role="option" tabindex="-1" data-value="edit"><b>PUT</b> Editar nome do pet</li>
+            <li role="option" tabindex="-1" data-value="schedule"><b>POST</b> Agendar horário</li>
+            <li role="option" tabindex="-1" data-value="agenda"><b>GET</b> Ver agenda de um pet</li>
+            <li role="option" tabindex="-1" data-value="delete-ok"><b>DELETE</b> Sucesso</li>
+            <li role="option" tabindex="-1" data-value="delete-404"><b>DELETE</b> Erro 404</li>
+          </ul>
+        </div>
+        <button class="btn ghost small push" id="btn-restart" disabled>↺ Reiniciar fluxo</button>
+      </div>
+      <div class="group">
+        <label class="switch"><input type="checkbox" id="auto"><span>Automático</span></label>
+        <label class="speed">Velocidade <input type="range" id="speed" min="0.5" max="3" step="0.25" value="1"><output id="speed-out">1x</output></label>
+        <button class="btn ghost small push" id="btn-reset-db">Resetar banco</button>
+      </div>
+    </section>
+  </footer>
+
+
+  <script src="js/glossary.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/flows.js"></script>
+  <script src="js/board.js"></script>
+  <script src="js/tooltip.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/tutorial.js"></script>
+</body>
+</html>
